@@ -151,14 +151,17 @@
   // Highlight the nav link of the section in view
   const navLinks = $$('.main-nav ul a');
   const sectionMap = navLinks.map((a) => $(a.getAttribute("href"))).filter(Boolean);
-  if ("IntersectionObserver" in window) {
-    const navObs = new IntersectionObserver((entries) => {
-      entries.forEach((en) => {
-        if (en.isIntersecting) navLinks.forEach((a) => a.classList.toggle("is-active", a.getAttribute("href") === "#" + en.target.id));
-      });
-    }, { rootMargin: "-45% 0px -50% 0px" });
-    sectionMap.forEach((s) => navObs.observe(s));
-  }
+  let navTicking = false;
+  const updateActiveNav = () => {
+    navTicking = false;
+    const line = window.scrollY + window.innerHeight * 0.4;
+    let current = sectionMap[0];
+    // Sort by position so the last section passed wins, regardless of nav order
+    sectionMap.slice().sort((a, b) => a.offsetTop - b.offsetTop).forEach((s) => { if (s.offsetTop <= line) current = s; });
+    navLinks.forEach((a) => a.classList.toggle("is-active", a.getAttribute("href") === "#" + current.id));
+  };
+  window.addEventListener("scroll", () => { if (!navTicking) { navTicking = true; requestAnimationFrame(updateActiveNav); } }, { passive: true });
+  updateActiveNav();
 
   backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
